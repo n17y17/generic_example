@@ -31,7 +31,7 @@ void setup() {
 int main() {
     setup();
 
-    uint8_t addr = 0x08;  //書き込み先のスレーブのアドレス  通常は8~119の間を使用する
+    uint8_t addr = 0x08;  //書き込み先のスレーブのアドレス  通常は8~119の間を使用する  7bit
     const uint8_t buf[] = "test\n";  //書き込み用データの先頭のポインタ
     size_t len = sizeof(buf);  //何バイト(文字)送信するか
     bool nostop = true;  //次の通信までバスのコントロールを保持するか
