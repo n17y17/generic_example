@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 
@@ -19,8 +21,8 @@ const uint kSclGpio = 5;  //SCLピンのGPIO番号
 
 void setup() {
     //I2Cアクセスを初期化
-    i2c_init(kI2c, GPIO_FUNC_I2C);
-
+    i2c_init(kI2c, GPIO_FUNC_I2C);  //デフォルトはマスター
+    
     //I2CのGPIOをセットする
     gpio_set_function(kSdaGpio, GPIO_FUNC_I2C);
     gpio_set_function(kSclGpio, GPIO_FUNC_I2C);
@@ -31,12 +33,17 @@ void setup() {
 int main() {
     setup();
 
-    uint8_t addr = 0x08;  //読み取り元のデバイスのアドレス  通常は8~119の間を使用する  7bit
-    uint8_t buf[5];  //読み込み用データの先頭のポインタ
-    size_t len = sizeof(buf);  //何バイト(文字)受信するか
-    bool nostop = false;  //次の通信までバスのコントロールを保持するか
-    i2c_read_blocking(kI2c, addr, &buf[0], len, nostop);  //受信
+    
+    uint8_t addr = 0x08;  //受信元のデバイスのアドレス  通常は8~119の間を使用する  7bit
+    uint8_t dst[1];  //受信した値を保存するための変数
+    size_t len = sizeof(dst);  //何バイト(文字)受信するか
+    bool nostop = false;  //次の通信まで他のデバイスに割り込ませないか
+
+    uint8_t src = 0x00;  //送信するデータ
+    i2c_write_blocking(kI2c, addr, &src, 1, true);  //スレーブに送信することで，スレーブから送信できるようにする  他のデバイスに割り込まれないように，最後の引数はtrue
+    i2c_read_blocking(kI2c, addr, &dst[0], len, nostop);  //受信  3番目の引数は受信した値を保存する配列の先頭へのポインタ
     sleep_ms(10);
+    printf("%s\n", dst);
 }
 
 /*

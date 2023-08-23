@@ -19,7 +19,7 @@ const uint kSclGpio = 5;  //SCLピンのGPIO番号
 
 void setup() {
     //I2Cアクセスを初期化
-    i2c_init(kI2c, GPIO_FUNC_I2C);
+    i2c_init(kI2c, GPIO_FUNC_I2C);  //デフォルトはマスター
 
     //I2CのGPIOをセットする
     gpio_set_function(kSdaGpio, GPIO_FUNC_I2C);
@@ -31,11 +31,11 @@ void setup() {
 int main() {
     setup();
 
-    uint8_t addr = 0x08;  //書き込み先のスレーブのアドレス  通常は8~119の間を使用する  7bit
-    const uint8_t buf[] = "test\n";  //書き込み用データの先頭のポインタ
-    size_t len = sizeof(buf);  //何バイト(文字)送信するか
-    bool nostop = true;  //次の通信までバスのコントロールを保持するか
-    i2c_write_blocking(kI2c, addr, &buf[0], len, nostop);  //送信
+    uint8_t addr = 0x08;  //送信先のスレーブのアドレス  通常は8~119の間を使用する  7bit
+    uint8_t src[] = "test\n";  //送信するデータ
+    size_t len = sizeof(src);  //何バイト(文字)送信するか
+    bool nostop = true;  //次の通信まで他のデバイスに割り込ませないか
+    i2c_write_blocking(kI2c, addr, &src[0], len, nostop);  //送信  3番目の引数は送信するデータの配列の先頭へのポインタ
     sleep_ms(10);
 }
 
