@@ -19,3 +19,6 @@ pico_sdk_import.cmake
 .vscode
 .cmake
 *.out
+generated
+pico-sdk
+pioasm
