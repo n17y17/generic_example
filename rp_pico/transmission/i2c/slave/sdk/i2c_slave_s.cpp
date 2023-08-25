@@ -27,7 +27,7 @@ const uint kSdaGpio = 4;  // スレーブのSDAピンのGPIO番号
 const uint kSclGpio = 5;  // スレーブのSCLピンのGPIO番号
 const uint kSlaveAddr = 0x08;  // 自身のスレーブアドレス
 
-// 割り込み処理の際に変更される変数を作成
+// 割り込み処理の際に変更される変数
 static struct {
     uint8_t memory[256];  // メモリーを作成
     uint8_t memory_address;  // レジスタアドレス（配列のインデックス）
@@ -42,22 +42,26 @@ static void I2cSlaveHandler(i2c_inst_t *i2c, i2c_slave_event_t event) {
             // 最初にメモリアドレスが書き込まれるので，記録する
             Context.memory_address = i2c_read_byte_raw(i2c);
             Context.memory_address_written = true;
+            printf("start communication\n");
         } else {
             // マスターがデータを送信したい場合
             Context.memory[Context.memory_address] = i2c_read_byte_raw(i2c);  // 初めに記録したレジスタアドレスのメモリに，受信した内容を記録する
-            Context.memory_address++;
+            printf(">%c", Context.memory[Context.memory_address]);
+            ++Context.memory_address;
         }
         break;
       }
       case I2C_SLAVE_REQUEST: {  // マスターがデータを要求しているとき
         // マスターがデータを受信したい場合
         i2c_write_byte_raw(i2c, Context.memory[Context.memory_address]);  // 初めに記録したレジスタアドレスのメモリの内容を送信する．
-        Context.memory_address++;
+        printf("<%c", Context.memory[Context.memory_address]);
+        ++Context.memory_address;
         break;
       }
       case I2C_SLAVE_FINISH: {  // マスターが停止／再起動の信号を送信したとき
         // メモリアドレスをリセットする
         Context.memory_address_written = false;
+        printf("end communication\n");
         break;
       }
       default: {
@@ -67,6 +71,8 @@ static void I2cSlaveHandler(i2c_inst_t *i2c, i2c_slave_event_t event) {
 }
 
 void setup() {
+    stdio_init_all();
+    
     // I2CのGPIOをセットする
     gpio_init(kSdaGpio);
     gpio_init(kSclGpio);
