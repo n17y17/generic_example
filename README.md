@@ -1,2 +1,2 @@
 # generic_example
-A repository of generic programs for Raspberry Pi and other electronics
+これは Raspberry pi などに関する汎用的なプログラムの保管庫です

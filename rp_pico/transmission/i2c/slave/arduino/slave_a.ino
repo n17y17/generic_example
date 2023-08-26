@@ -38,10 +38,12 @@ static void I2c1DataReceive(int receive_len) {
     while (--receive_len) Context.memory[Context.memory_address++] = Wire1.read();
 }
 
+void I2c0Request();
+
 void setup() {
   Wire.begin(0x08);
   Wire.onReceive(I2c0DataReceive);
-  Wire.onRequest();
+  Wire.onRequest(I2c0Request);
 }
 
 void loop() {
