@@ -1,5 +1,9 @@
 // 未検証
-#include "Wire.h"
+#include <Wire.h>
+
+/*
+I2C通信を利用して，1000msに一回，特定のテキストデータを送信
+*/
 
 /*
 I2C通信は1台のマスターと複数台のスレーブの間の通信です．
@@ -22,27 +26,28 @@ const uint32_t kI2cBaudRate = 100 * 1000;  // 通信速度  Hz  通常は400kHz�
 const uint8_t kSdaGpio = 4;  // SDAピンのGPIO番号
 const uint8_t kSclGpio = 5;  // SCLピンのGPIO番号
 
-// Wireライブラリの初期化  I2C0とI2C1を使う際にそれぞれ一回だけ呼び出す
-void BeginI2c(bool i2c_num, uint32_t i2c_baud_rate) {
+/*
+Wireライブラリの初期化  I2C0とI2C1を使う際にそれぞれ一回だけ呼び出す
+i2c_num : i2c0かi2c1か
+i2c_baud_rate : i2cの転送速度
+i2c_gpios : i2cのSDAとSCLのピン番号，{ }の中に入れて，{SDA,SCL,SDA,SCL,...}の順番で，使うものをすべて並べて書く
+*/
+void SetupI2c(bool i2c_num, uint32_t i2c_baud_rate, std::initializer_list<uint8_t> i2c_gpios) {
+    int i = 0;
     if (i2c_num) {
+        for (uint8_t i2c_gpio : i2c_gpios) {
+            if ((++i) % 2) Wire1.setSDA(i2c_gpio);
+            else Wire1.setSCL(i2c_gpio);
+        }
         Wire1.begin();  // 引数のスレーブアドレスを省略したのでマスターとして接続
         Wire1.setClock(i2c_baud_rate);
     } else {
+        for (uint8_t i2c_gpio : i2c_gpios) {
+            if ((++i) % 2) Wire.setSDA(i2c_gpio);
+            else Wire.setSCL(i2c_gpio);
+        }
         Wire.begin();  // 引数のスレーブアドレスを省略したのでマスターとして接続
         Wire.setClock(i2c_baud_rate);
-    }
-
-    delay(10);  // 要検証
-}
-
-// I2CのGPIOピン有効化  Wireライブラリの初期化の前に実行
-void SetI2cPin(bool i2c_num, uint8_t sda_gpio, uint8_t scl_gpio) {
-    if (i2c_num) {
-        Wire1.setSDA(sda_gpio);
-        Wire1.setSCL(scl_gpio);
-    } else {
-        Wire.setSDA(sda_gpio);
-        Wire.setSCL(scl_gpio);
     }
 
     delay(10);  // 要検証
@@ -51,11 +56,17 @@ void SetI2cPin(bool i2c_num, uint8_t sda_gpio, uint8_t scl_gpio) {
 void setup() {
     Serial.begin(9600);
 
-    SetI2cPin(kI2cNum, kSdaGpio, kSclGpio);
-    BeginI2c(kI2cNum, kI2cBaudRate);
+    SetupI2c(kI2cNum, kI2cBaudRate, {kSdaGpio, kSclGpio});
 }
 
-// スレーブへの書き込み
+/*
+スレーブへの書き込み
+i2c_num : i2c0かi2c1か
+addr : 通信先のデバイスのスレーブアドレス (どのデバイスにデータを書き込むか) 通常は8~119の間を使用する  7bit
+reg : 送信先のデバイスのレジスタアドレス (スレーブ内のメモリの何番地にデータを書き込むか)
+data : 送信するデータ  配列の先頭へのポインタ
+len : 何バイト(文字)書き込むか
+*/
 inline void WriteI2c(bool i2c_num, uint8_t addr, uint8_t reg, uint8_t *data, size_t len) {
     if (i2c_num) {
         Wire1.beginTransmission(addr);  // 接続を開始  引数は送信先のスレーブアドレス
@@ -79,7 +90,7 @@ void loop() {
     size_t len = 6;  // 何バイト(文字)書き込むか
     WriteI2c(kI2cNum, addr, reg, data, len);
 
-    Serial.println(sprintf("write:%s", (const char*)data));
+    Serial.println(sprintf("write:%s", (char*)data));
 
     delay(1000);
 }
@@ -88,4 +99,5 @@ void loop() {
 このプログラムの作成にあたり以下を参考にしました
 https://garchiving.com/i2c-communication-with-arduino/
 https://garchiving.com/i2c-spi-communication-with-pico/
+https://marycore.jp/prog/cpp/variadic-function/
 */

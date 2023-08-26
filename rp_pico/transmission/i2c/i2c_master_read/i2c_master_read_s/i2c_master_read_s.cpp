@@ -1,8 +1,13 @@
 // 未検証
 #include <stdio.h>
+#include <initializer_list>
 
 #include "hardware/i2c.h"
 #include "pico/stdlib.h"
+
+/*
+I2C通信を利用して，1000msに一回，テキストデータを受信
+*/
 
 /*
 I2C通信は1台のマスターと複数台のスレーブの間の通信です．
@@ -25,24 +30,19 @@ const uint32_t kI2cBaudRate = 100 * 1000;  // 通信速度  Hz  通常は400kHz�
 const uint8_t kSdaGpio = 4;  // SDAピンのGPIO番号
 const uint8_t kSclGpio = 5;  // SCLピンのGPIO番号
 
-// I2Cの初期化  I2C0とI2C1を使う際にそれぞれ一回だけ呼び出す
-void BeginI2c(bool i2c_num, uint32_t i2c_baud_rate) {
-    if (i2c_num) {
-        i2c_init(i2c1, i2c_baud_rate);  // デフォルトはマスター
-    } else {
-        i2c_init(i2c0, i2c_baud_rate);  // デフォルトはマスター
-    }
-    
-    sleep_ms(10);  // 要検証
-}
+/*
+I2Cの初期化  I2C0とI2C1を使う際にそれぞれ一回だけ呼び出す
+i2c_num : i2c0かi2c1か
+i2c_baud_rate : i2cの転送速度
+i2c_gpios : i2cのSDAとSCLのピン番号，{ }の中に入れて，{SDA,SCL,SDA,SCL,...}の順番で，使うものをすべて並べて書く
+*/
+void SetupI2c(bool i2c_num, uint32_t i2c_baud_rate, std::initializer_list<uint8_t> i2c_gpios) {
+    i2c_init((i2c_num ? i2c1 : i2c0), i2c_baud_rate);
 
-// I2CのGPIOピン有効化  I2Cの初期化の後に実行
-void SetI2cPin(bool i2c_num, uint8_t sda_gpio, uint8_t scl_gpio) {
-    // I2CのGPIOをセットする
-    gpio_set_function(sda_gpio, GPIO_FUNC_I2C);
-    gpio_set_function(scl_gpio, GPIO_FUNC_I2C);
-    gpio_pull_up(sda_gpio);
-    gpio_pull_up(scl_gpio);
+    for (uint8_t i2c_gpio : i2c_gpios) {
+        gpio_set_function(i2c_gpio, GPIO_FUNC_I2C);  // GPIOピンの有効化
+        gpio_pull_up(i2c_gpio);
+    }
 
     sleep_ms(10);  // 要検証
 }
@@ -51,11 +51,17 @@ void setup() {
     stdio_init_all();
     sleep_ms(1000);  // 要検証
 
-    BeginI2c(kI2cNum, kI2cBaudRate);
-    SetI2cPin(kI2cNum, kSdaGpio, kSclGpio);
+    SetupI2c(kI2cNum, kI2cBaudRate, {kSdaGpio, kSclGpio});
 }
 
-// スレーブからの読み込み
+/*
+スレーブからの読み込み
+i2c_num : i2c0かi2c1か
+addr : 通信先のデバイスのスレーブアドレス (どのデバイスにデータを書き込むか) 通常は8~119の間を使用する  7bit
+reg : 受信元のデバイスのレジスタアドレス (スレーブ内のメモリの何番地からデータを読み込むか)
+data : 受信したデータを入れるための変数
+len : 何バイト(文字)読み込むか
+*/
 inline void ReadI2c(bool i2c_num, uint8_t addr, uint8_t reg, uint8_t *data, size_t len) {
     if (i2c_num) {
         i2c_write_blocking(i2c1, addr, &reg, 1, true);  // レジスタアドレス(スレーブのメモリの何番地から読み込むか)を先に送信
@@ -75,7 +81,7 @@ void loop() {
     size_t len = 6;  // 何バイト(文字)読み込むか
     ReadI2c(kI2cNum, addr, reg, data, len);
 
-    printf("read:%s\n", (const char*)data);
+    printf("read:%s\n", (char*)data);
 
     sleep_ms(1000);
 }
@@ -90,4 +96,5 @@ int main() {
 このプログラムの作成にあたり以下を参考にしました
 https://stemship.com/arduino-beginner-i2c/
 https://omoroya.com/arduino-extra-edition-06/
+https://marycore.jp/prog/cpp/variadic-function/
 */
