@@ -22,3 +22,4 @@ pico_sdk_import.cmake
 generated
 pico-sdk
 pioasm
+*.ninja*
