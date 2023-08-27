@@ -10,7 +10,9 @@ void ReadI2c_Direct(bool, uint8_t, uint8_t*, size_t);
 void WriteI2c(bool, uint8_t, uint8_t*, size_t, uint8_t);
 void WriteI2c_Direct(bool, uint8_t, uint8_t*, size_t);
 
+// Arduino版では実装できていません
 // void SetupI2cSlave(bool, uint32_t, std::initializer_list<uint8_t>, uint8_t, uint8_t*);
+
 void SetupI2cSlave_Direct(bool, uint32_t, std::initializer_list<uint8_t>, uint8_t, uint8_t*, uint8_t*);
 
 #endif
