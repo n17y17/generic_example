@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.12)
 include(pico_sdk_import.cmake)
 
 #プロジェクト名，プログラミング言語を設定
-project(i2c_slave C CXX ASM)
+project(i2c_master_read C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -13,14 +13,14 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 #ビルドを実行するファイルを追加
-add_executable(i2c_slave i2c_slave_s.cpp i2c_s.cpp)
+add_executable(i2c_master_read i2c_master_read_s.cpp i2c_s.cpp)
 
 #pico_stdlib（ライブラリ）の読み込み
-target_link_libraries(i2c_slave hardware_i2c pico_i2c_slave pico_stdlib)
+target_link_libraries(i2c_master_read pico_stdlib pico_i2c_slave hardware_i2c)
 
 #USB出力を有効にし，UART出力を無効にする
-pico_enable_stdio_usb(i2c_slave 1)
-pico_enable_stdio_uart(i2c_slave 0)
+pico_enable_stdio_usb(i2c_master_read 1)
+pico_enable_stdio_uart(i2c_master_read 0)
 
 #map/bin/hex/uf2などのファイルを追加で出力する
-pico_add_extra_outputs(i2c_slave)
+pico_add_extra_outputs(i2c_master_read)

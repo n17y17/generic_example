@@ -1,4 +1,11 @@
-#include "Wire.h"
+// 未検証
+#include "i2c_a.hpp"
+
+/*
+これはスレーブ用のプログラムです
+I2C通信を利用して，マスターから送られてきたデータをメモリーに保存
+マスターのリクエストに応じてメモリーのデータを送信
+*/
 
 /*
 I2C通信は1台のマスターと複数台のスレーブの間の通信です．
@@ -16,37 +23,32 @@ I2C通信は1台のマスターと複数台のスレーブの間の通信です�
 　　　　　マスターが受信しようとした場合，スレーブは初めに送られてきたレジスタアドレスの場所のデータを送信します．
 */
 
+const bool kI2cNum = 0;  // i2c0かi2c1か
+const uint32_t kI2cBaudRate = 100 * 1000;  // 通信速度  Hz  通常は400kHz以下を使う
 const uint8_t kSdaGpio = 4;  // スレーブのSDAピンのGPIO番号
 const uint8_t kSclGpio = 5;  // スレーブのSCLピンのGPIO番号
-const uint8_t kSlaveAddr = 0x08;  // 自身のスレーブアドレス
+const uint8_t kI2cSlaveAddr = 0x08;  // 自身のスレーブアドレス
 
-// 割り込み処理の際に変更される変数を作成
-static struct {
-    uint8_t memory[256];  // メモリーを作成
-    uint8_t memory_address;  // レジスタアドレス（配列のインデックス）
-    // bool memory_address_written;  // 最初に受信するはずのレジスタアドレスをすでに受信したか
-} Context;
+// 入力データを入れるための変数を作成
+uint8_t kI2cInputData[256];  // 絶対にグローバル変数を使用！！
 
-static void I2c0DataReceive(int receive_len) {
-    while (Wire.available() < receive_len) ;  // 要検証  // 全バイトが読み取り可能になるまで待機
-    Context.memory_address = Wire.read();
-    while (--receive_len) Context.memory[Context.memory_address++] = Wire.read();
-}
-static void I2c1DataReceive(int receive_len) {
-    while (Wire1.available() < receive_len) ;  // 要検証  // 全バイトが読み取り可能になるまで待機
-    Context.memory_address = Wire1.read();
-    while (--receive_len) Context.memory[Context.memory_address++] = Wire1.read();
-}
-
-void I2c0Request();
+// 出力データを作成
+uint8_t kI2cOutputData[] = "hello World";  // 絶対にグローバル変数を使用！！
 
 void setup() {
-  Wire.begin(0x08);
-  Wire.onReceive(I2c0DataReceive);
-  Wire.onRequest(I2c0Request);
+    Serial.begin(9600);
+    delay(1000);  // 要検証
+
+    // I2Cをスレーブとしてセットアップする
+    SetupI2cSlave_Direct(kI2cNum, kI2cBaudRate, {kSdaGpio, kSclGpio}, kI2cSlaveAddr, kI2cInputData, kI2cOutputData);
+    // マスター側のプログラムは WriteI2c_Direct, ReadI2c_Direct を使ってください．
+    // WriteI2c, Readi2c を使うと，正常に通信できません
 }
 
 void loop() {
+    // 入力データkI2cInputDataは入力を受けたときに勝手に更新されます
+    // ここで，入力データを読み取り，利用してください
+    // 出力データの更新も行えます
 }
 
 /*

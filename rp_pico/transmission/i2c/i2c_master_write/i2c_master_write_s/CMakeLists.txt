@@ -13,10 +13,10 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 #ビルドを実行するファイルを追加
-add_executable(i2c_master_write i2c_master_write_s.cpp)
+add_executable(i2c_master_write i2c_master_write_s.cpp i2c_s.cpp)
 
 #pico_stdlib（ライブラリ）の読み込み
-target_link_libraries(i2c_master_write pico_stdlib hardware_i2c)
+target_link_libraries(i2c_master_write pico_stdlib pico_i2c_slave hardware_i2c)
 
 #USB出力を有効にし，UART出力を無効にする
 pico_enable_stdio_usb(i2c_master_write 1)
